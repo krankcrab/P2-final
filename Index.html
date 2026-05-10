@@ -1,0 +1,471 @@
+import { useState, useEffect, useCallback } from “react”;
+
+const ALL_QUESTIONS = [
+{ id: 1, q: “Most of the blood’s formed elements are:”, options: [“Platelets”, “Leukocytes”, “Electrolytes”, “Erythrocytes”], ans: 3, topic: “Hematology” },
+{ id: 2, q: “Which of the following is a common sign of bleeding in the upper gastrointestinal tract?”, options: [“Hematochezia”, “Vomitus”, “Gross bleeding”, “Melena”], ans: 3, topic: “GI” },
+{ id: 3, q: “Which of the following is an example of a local effect of a hazardous material?”, options: [“Blood in the urine”, “Restlessness”, “Nausea and vomiting”, “Blister formation”], ans: 3, topic: “Hazmat” },
+{ id: 4, q: “Which of the following is a proper technique when accessing an implantable venous access device?”, options: [“Aspirate 5 mL of blood and then block the flow with the crimping device”, “Stabilize the device and insert the needle at 45-degree angle to the skin”, “Flush with 20 mL of normal saline as soon as you can aspirate blood”, “Remove the syringe from the needle then block the flow with the crimping device”], ans: 0, topic: “Procedures” },
+{ id: 5, q: “While providing care following an earthquake, many victims are experiencing respiratory distress. This is MOST likely due to:”, options: [“Dust suffocation”, “Carbon monoxide”, “Thoracic barotrauma”, “Infectious pneumonia”], ans: 0, topic: “Trauma/Disaster” },
+{ id: 6, q: “When washing your hands after a call, you should:”, options: [“Wash your hands for at least 10 seconds”, “Use an antimicrobial, alcohol-based foam or gel”, “Wash with cold water and let your hands air dry”, “Scrub vigorously with an antibacterial gel”], ans: 1, topic: “Infection Control” },
+{ id: 7, q: “___ is/are the fastest and most powerful form of radiation and can easily penetrate through lead.”, options: [“Alpha rays”, “Beta rays”, “Gamma rays”, “Neutron energy”], ans: 3, topic: “Hazmat” },
+{ id: 8, q: “Which of the following would cause hypoglycemia in the patient with type 1 diabetes?”, options: [“Insulin underdose”, “Too much insulin”, “Too little food”, “Strenuous exertion”], ans: 1, topic: “Endocrine” },
+{ id: 9, q: “Treatment for cyanide poisoning may include:”, options: [“Amyl nitrite”, “Methylene red”, “Sodium”, “Hydroxocobalamin”], ans: 0, topic: “Toxicology” },
+{ id: 10, q: “The single MOST common cause of seizures in both term and preterm infants is:”, options: [“Intracranial hemorrhaging”, “Hypoxic ischemic encephalopathy”, “Congenital or developmental defects”, “A severe derangement in electrolytes”], ans: 1, topic: “Pediatrics” },
+{ id: 11, q: “Which of the following medications would be the MOST acceptable alternative to morphine for analgesia in patients with an acute coronary syndrome?”, options: [“Versed”, “Fentanyl”, “Diazepam”, “Ibuprofen”], ans: 1, topic: “Cardiology” },
+{ id: 12, q: “The MOST common device used to provide positive-pressure ventilation to a newborn in the prehospital setting is a:”, options: [“T-piece resuscitator”, “Self-inflating bag-mask device”, “Flow-inflating bag-mask device”, “Manually triggered ventilator”], ans: 1, topic: “Neonatology” },
+{ id: 13, q: “Which of the following is a characteristic of multifocal atrial tachycardia?”, options: [“QRS complexes less than 0.11 seconds in duration”, “Non-visible P waves with a rapid ventricular rate”, “P waves and PR intervals that vary in shape and duration”, “Regular R-R intervals with a rate less than 150 beats/min”], ans: 2, topic: “Cardiology” },
+{ id: 14, q: “You and your partner respond to an explosion at the courthouse with multiple victims. At this scene, it is most important for you to:”, options: [“Avoid unnecessarily moving objects to preserve evidence”, “Immediately report to the incident commander for instructions”, “Anticipate that a secondary explosive device is on the premises”, “Quickly establish an initial triage”], ans: 2, topic: “Trauma/Disaster” },
+{ id: 15, q: “Which of the following statements regarding radiation is correct?”, options: [“Radiation is unlimited as to how far it can travel through the atmosphere”, “Alpha radiation can travel several miles before losing its radioactivity”, “In most cases, moving 100 feet away from the radiation source is adequate”, “It is impossible to recognize the type of radiation emitted from a given source”], ans: 3, topic: “Hazmat” },
+{ id: 16, q: “When assessing the abdomen of a woman who is 36 weeks pregnant, you should expect it to be:”, options: [“Rigid and distended”, “Firm and nontender”, “Enlarged and tender”, “Distended and guarded”], ans: 1, topic: “OB/GYN” },
+{ id: 17, q: “When caring for a child with a ventricular shunt or gastrostomy tube, it is important to:”, options: [“Provide supportive care only and rapidly transport”, “Recognize that the caregiver is a key resource whose expertise should be utilized”, “Assure the caregiver you can care for the child and recommend they follow the ambulance”, “Obtain a complete medical history then develop a treatment plan”], ans: 1, topic: “Pediatrics” },
+{ id: 18, q: “Which of the following events occur during the third stage of labor?”, options: [“Crowning”, “Placental delivery”, “Delivery of the baby”, “Mucous plug expulsion”], ans: 1, topic: “OB/GYN” },
+{ id: 19, q: “A decrease in adrenal hormone production will result in which of the following symptoms?”, options: [“Weakness”, “Hypotension”, “Hydration”, “Inability to respond”], ans: 0, topic: “Endocrine” },
+{ id: 20, q: “Which of the following clinical findings is suggestive of left-sided heart failure?”, options: [“An S3 gallop”, “Sacral edema”, “Crackles in the lungs”, “Shortness of breath”], ans: 2, topic: “Cardiology” },
+{ id: 21, q: “Which of the following is a potential complication of pelvic inflammatory disease?”, options: [“Uterine rupture”, “Ectopic pregnancy”, “Respiratory failure”, “Urinary tract infection”], ans: 1, topic: “OB/GYN” },
+{ id: 22, q: “The __________ represents the end of ventricular depolarization and the beginning of repolarization.”, options: [“J point”, “T wave”, “ST segment”, “T-P interval”], ans: 0, topic: “Cardiology” },
+{ id: 23, q: “In which of the following situations would a transfusion reaction MOST likely occur?”, options: [“A person with type AB blood receives type O blood”, “A person with type O blood receives type AB blood”, “A person with type A-negative blood receives type O blood”, “A person with type B-positive blood receives type B-positive blood”], ans: 1, topic: “Hematology” },
+{ id: 24, q: “An 80-year-old woman is vomiting bright red blood with BP 76/56, pulse 76 weak, on Toprol and ibuprofen. Which statement is MOST correct?”, options: [“Suspect shock from lower GI bleeding, start two large-bore IVs, infuse NS until SBP >90”, “Gross hematemesis suggests GI bleeding; avoid isotonic crystalloid due to CHF”, “Probably a bleeding peptic ulcer from ibuprofen; lack of tachycardia is due to the beta blocker”, “Vital signs are from medications; pallor and diaphoresis are most likely from hypoglycemia”], ans: 2, topic: “GI” },
+{ id: 25, q: “An elderly woman with COPD has peripheral edema, jugular vein engorgement on abdominal pressure, and takes a ‘water pill’ and Vasotec. You should:”, options: [“Expect to hear crackles when you auscultate her lungs”, “Suspect acute right heart failure and administer oxygen”, “Start an IV of normal saline and give her a 250-mL bolus”, “Conclude that she has been noncompliant with her diuretic”], ans: 1, topic: “Cardiology” },
+{ id: 26, q: “To assess a newborn’s preductal oxygen saturation, you should place the pulse oximeter probe on the:”, options: [“Right foot”, “Left hand”, “Left foot”, “Right hand”], ans: 3, topic: “Neonatology” },
+{ id: 27, q: “Which of the following injuries or conditions should be assigned the HIGHEST triage priority?”, options: [“Full-thickness burns”, “Respiratory distress”, “Cardiopulmonary arrest”, “Multiple long bone fractures”], ans: 1, topic: “Trauma/Disaster” },
+{ id: 28, q: “Which of the following is a common central nervous system manifestation of anaphylactic shock?”, options: [“Hypertension”, “Vomiting”, “Anxiety”, “Combativeness”], ans: 2, topic: “Immunology” },
+{ id: 29, q: “Using the incident command system provides a modular organizational structure that:”, options: [“Is overseen by the most experienced paramedic”, “Depends on the size and complexity of the incident”, “Requires a uniform approach to any major incident”, “Remains static in all incidents involving mass casualties”], ans: 1, topic: “EMS Operations” },
+{ id: 30, q: “Which of the following ECG abnormalities is MOST consistent with hyperkalemia?”, options: [“Tall, peaked T waves”, “Prominent U waves”, “Prolonged QT interval”, “The presence of a J wave”], ans: 0, topic: “Cardiology” },
+{ id: 31, q: “Which of the following ECG waveforms represents ventricular depolarization?”, options: [“QRS complex”, “U wave”, “T wave”, “ST segment”], ans: 0, topic: “Cardiology” },
+{ id: 32, q: “Which of the following should make you the MOST suspicious of a terrorist attack or WMD incident?”, options: [“You respond to a temple, church, or mosque for a patient who was assaulted”, “You receive a call involving multiple patients with similar signs and symptoms”, “A public building is evacuated when an employee notices the smell of natural gas”, “A government employee presents with an acute onset of a cough and dyspnea”], ans: 1, topic: “Hazmat” },
+{ id: 33, q: “To maintain a neutral airway position in an unresponsive infant, you should:”, options: [“Slightly extend the infant’s head”, “Pad underneath the infant’s occiput”, “Place a towel roll under the shoulders”, “Insert an appropriate-sized oral airway”], ans: 2, topic: “Pediatrics” },
+{ id: 34, q: “Unlike sinus tachycardia, reentry supraventricular tachycardia in infants is characterized by:”, options: [“A presence of P waves”, “An unvarying pulse rate”, “A history of fever or dehydration”, “A pulse rate greater than 180 beats/min”], ans: 1, topic: “Pediatrics” },
+{ id: 35, q: “When caring for a woman with an inevitable or incomplete abortion, you should be MOST concerned with:”, options: [“Bleeding and shock”, “Severe maternal infection”, “Maternal emotional trauma”, “The risk of airway compromise”], ans: 0, topic: “OB/GYN” },
+{ id: 36, q: “Which of the following symptoms are less likely to be observed in a 90-year-old patient with a severe infection?”, options: [“Altered mentation”, “Weakness”, “Fever”, “Loss of appetite”], ans: 2, topic: “Geriatrics” },
+{ id: 37, q: “Tetralogy of Fallot is a combination of four heart defects. Which of the following is one of them?”, options: [“Atrial septal defect”, “Coarctation of the aorta”, “Right ventricular hypertrophy”, “Tricuspid atresia”], ans: 2, topic: “Pediatrics” },
+{ id: 38, q: “Mittelschmerz is defined as:”, options: [“Pain that occurs outside the menstrual cycle”, “Two consecutively missed menstrual periods”, “Pain in the middle of the menstrual cycle”, “A sudden premature cessation of menses”], ans: 2, topic: “OB/GYN” },
+{ id: 39, q: “Immediately following dialysis, a patient has BP 80/50, pulse 40 weak, sinus bradycardia on ECG. Your next action should be to:”, options: [“Obtain a 12-lead ECG tracing”, “Administer 0.5 mg of atropine sulfate”, “Administer a 20-mL/kg fluid bolus”, “Administer calcium and bicarbonate”], ans: 1, topic: “Renal” },
+{ id: 40, q: “Production of clotting factors is a function of the:”, options: [“Kidney”, “Bone marrow”, “Liver”, “Spleen”], ans: 2, topic: “Hematology” },
+{ id: 41, q: “An unresponsive 66-year-old with prior strokes, severe headache then passed out, poor respiratory effort, elevated BP, slow bounding pulse. You should:”, options: [“Give high-flow O2, monitor, start IV NS, administer 0.5 mg atropine for bradycardia”, “Hyperventilate at 30 breaths/min, begin transcutaneous pacing, give 25g dextrose”, “Intubate after preoxygenation, ventilate at 8 breaths/min, start IV NS, give 50g dextrose”, “Assist ventilations, apply cardiac monitor, start IV NS, assess BGL, prepare for transport”], ans: 3, topic: “Neurology” },
+{ id: 42, q: “A patient who is coughing up purulent sputum is likely experiencing:”, options: [“An infection”, “Pulmonary edema”, “Emphysema”, “Dehydration”], ans: 0, topic: “Respiratory” },
+{ id: 43, q: “Common complaints in patients experiencing an acute coronary syndrome include:”, options: [“Fatigue”, “Headache”, “Cough”, “Diarrhea”], ans: 0, topic: “Cardiology” },
+{ id: 44, q: “Unlike an idioventricular rhythm, an agonal rhythm:”, options: [“Indicates a regular ventricular pacemaker”, “Is associated with a faster rate”, “Is associated with a lower mortality rate”, “Does not produce a palpable pulse”], ans: 3, topic: “Cardiology” },
+{ id: 45, q: “A 66-year-old with chronic bronchitis has diffuse rhonchi, takes OTC antitussive, and has not been compliant with home oxygen. MOST likely cause of respiratory distress:”, options: [“Oxygen noncompliance”, “Recent antitussive use”, “An underlying infection”, “Acute right heart failure”], ans: 1, topic: “Respiratory” },
+{ id: 46, q: “Which of the following would the paramedic likely administer to a patient with diabetic ketoacidosis?”, options: [“Insulin”, “Isotonic fluid”, “Hydrocortisone”, “Magnesium”], ans: 1, topic: “Endocrine” },
+{ id: 47, q: “A 44-year-old woman with migraine history presents with severe headache, nausea, photophobia, BP 170/94. MOST appropriate treatment:”, options: [“Assess pupils, administer O2, start IV and give morphine, transport”, “Place in Fowler position, administer O2, transport for definitive care”, “O2 as tolerated, start IV, administer ondansetron, transport without lights or siren”, “High-flow O2, establish vascular access, administer nitroglycerin for blood pressure”], ans: 2, topic: “Neurology” },
+{ id: 48, q: “When attempting resuscitation of a child with pulseless electrical activity, you should:”, options: [“Administer epinephrine via ET tube if possible”, “Attempt to identify an underlying cause of the arrest”, “Perform synchronized cardioversion if the rate is fast”, “Give atropine if the heart rate is less than 60 beats/min”], ans: 1, topic: “Pediatrics” },
+{ id: 49, q: “A patient with status asthmaticus commonly presents with:”, options: [“Physical exhaustion and inaudible breath sounds”, “Audible expiratory wheezing and severe cyanosis”, “Accessory muscle use and inspiratory wheezing”, “Compensatory respiratory alkalosis and stridor”], ans: 2, topic: “Respiratory” },
+{ id: 50, q: “Which of the following statements about panic disorder is correct?”, options: [“Panic disorder is characterized by sudden, unexpected fear and dread”, “Most initial panic attacks occur without a known precipitating stressor”, “Men are two thirds more likely to experience panic disorder than women”, “Panic disorder is a random disorder that usually does not run in the family”], ans: 0, topic: “Psych” },
+{ id: 51, q: “The hematocrit is the:”, options: [“Ratio of red blood cells to platelets”, “Overall proportion of red blood cells in the blood”, “Percentage of blood accounted for by the plasma”, “Percentage of hemoglobin found within red blood cells”], ans: 1, topic: “Hematology” },
+{ id: 52, q: “When a disease infects large numbers of people and spreads all over the world, it is considered a(n):”, options: [“Endemic”, “Epidemic”, “Outbreak”, “Pandemic”], ans: 3, topic: “Infection Control” },
+{ id: 53, q: “Which of the following statements regarding Alzheimer disease is correct?”, options: [“Alzheimer disease is likely not a part of the normal process of aging”, “Autopsy is the only way to confirm Alzheimer”, “The symptoms of Alzheimer disease are generally obvious at its onset”, “Common signs of Alzheimer disease include paranoia and delusions”], ans: 1, topic: “Geriatrics” },
+{ id: 54, q: “A 74-year-old has his head cocked to one side and cannot move it. He was placed on Seroquel 2 days ago. You should:”, options: [“Administer 25 to 50 mg of diphenhydramine”, “Suspect that the patient has catatonic schizophrenia”, “Establish vascular access and administer naloxone”, “Expect to find that his blood sugar level is elevated”], ans: 0, topic: “Psych” },
+{ id: 55, q: “Which of the following is a physiologic effect of histamine?”, options: [“Systemic vasodilation”, “Increased cardiac contractility”, “Severe bronchoconstriction”, “Increased vascular permeability”], ans: 0, topic: “Immunology” },
+{ id: 56, q: “Which of the following signs or symptoms are consistent with meningitis in an infant?”, options: [“Kehr sign, vomiting, and poor skin turgor”, “High-pitched cry and bulging fontanelles”, “Low-grade fever and depressed fontanelles”, “High fever, drooling, and tachycardia”], ans: 1, topic: “Pediatrics” },
+{ id: 57, q: “A patient with respiratory distress who is willing to lie flat:”, options: [“Should be intubated at once”, “May be acutely deteriorating”, “Has minimal fluid in the lungs”, “Likely has basilar pneumonia”], ans: 1, topic: “Respiratory” },
+{ id: 58, q: “Clinical signs of hypokalemia include:”, options: [“Muscle cramps and peaked T waves”, “Weakness and flattened T waves”, “Convulsions and absent P waves”, “Coma and severe peripheral edema”], ans: 1, topic: “Cardiology” },
+{ id: 59, q: “While triaging at an MCI, a patient is conscious and alert but cannot feel or move anything below his umbilicus. You should:”, options: [“Apply full spinal motion restriction precautions at once”, “Conduct a more in-depth neurologic exam”, “Place a yellow tag on him and move to the next patient”, “Categorize him as immediate and continue triage”], ans: 2, topic: “Trauma/Disaster” },
+{ id: 60, q: “When an infant or child is in respiratory failure:”, options: [“Tachypnea is usually present despite a marked decrease in heart rate”, “Decreased cerebral perfusion leads to restlessness and a weak, rapid pulse”, “He or she can no longer compensate, which causes hypoxia and hypercarbia”, “Oxygen via nonrebreathing mask should be given if tidal volume is reduced”], ans: 2, topic: “Pediatrics” },
+{ id: 61, q: “A known heroin abuser is found unconscious with slow shallow respirations and slow weak pulse. You should:”, options: [“Suction oropharynx, perform intubation, then administer naloxone via slow IV push”, “Preoxygenate him with a bag-mask for 2 to 3 minutes and then intubate”, “Apply O2 via nonrebreathing mask, administer naloxone, be prepared to assist ventilations”, “Assist ventilations with a bag-mask, administer naloxone, and reassess ventilatory status”], ans: 3, topic: “Toxicology” },
+{ id: 62, q: “Level ___ personal protective equipment would MOST likely be worn during transport of patients with potential secondary contamination.”, options: [“Level A”, “Level B”, “Level C”, “Level D”], ans: 2, topic: “Hazmat” },
+{ id: 63, q: “Which of the following pulseless rhythms is NOT treated as pulseless electrical activity?”, options: [“Sinus bradycardia”, “Idioventricular rhythm”, “Ventricular tachycardia”, “Junctional escape rhythm”], ans: 2, topic: “Cardiology” },
+{ id: 64, q: “Hepatomegaly and jugular venous distention are MOST suggestive of:”, options: [“Left heart failure”, “Right heart failure”, “Pulmonary edema”, “Severe pneumonia”], ans: 1, topic: “Cardiology” },
+{ id: 65, q: “Which of the following statements regarding the unified command system is correct?”, options: [“A unified command system is difficult to establish before an incident and is activated when one agency is overwhelmed”, “Multiple agencies from multiple jurisdictions work together to develop a plan with shared responsibilities”, “Functions optimally if one incident commander from each agency is identified before an MCI occurs”, “Should focus only on major events such as building collapses, plane crashes, and terrorist attacks”], ans: 1, topic: “EMS Operations” },
+{ id: 66, q: “A patient with Cushing syndrome would MOST likely present with:”, options: [“Ketoacidosis”, “Hyperglycemia”, “Decreased urination”, “Acute hyperactivity”], ans: 1, topic: “Endocrine” },
+{ id: 67, q: “A 29-year-old woman with severe asthma attack: prior ICU admission/intubation, took 3 puffs of rescue inhaler without effect, anxious, tachypneic, audible wheezing. You should:”, options: [“Apply a CPAP unit, transport immediately, attempt vascular access en route”, “Begin assisting ventilations with bag-mask and 100% O2, prepare to intubate”, “Start IV of NS, administer methylprednisolone via IV push, transport ASAP”, “Attempt to slow breathing with respiratory coaching, administer nebulized bronchodilator, transport”], ans: 0, topic: “Respiratory” },
+{ id: 68, q: “Common causes of bradycardia include:”, options: [“Exercise”, “Hyperthermia”, “Amphetamines”, “Beta blocker use”], ans: 3, topic: “Cardiology” },
+{ id: 69, q: “A common sign of the measles is:”, options: [“Severe diarrhea”, “A blotchy red rash”, “A purpuric rash”, “Petechiae”], ans: 1, topic: “Infection Control” },
+{ id: 70, q: “Which of the following statements regarding a radiologic dispersal device (RDD) is correct?”, options: [“An RDD is effective because damage is enhanced by the radioactive material within it”, “The destructive ability of an RDD, also known as a dirty bomb, is significant because it contains a chemical agent”, “Once radioactive material is placed into the RDD, it would injure 10 times as many people as the explosive alone”, “An RDD is any container designed to disperse radioactive material and requires the use of an explosive device”], ans: 3, topic: “Hazmat” },
+{ id: 71, q: “Esophageal varices are a direct result of:”, options: [“Esophageal erosion”, “Alcohol consumption”, “Portal hypertension”, “Cirrhosis of the liver”], ans: 2, topic: “GI” },
+{ id: 72, q: “Characteristic physical features of Down syndrome include:”, options: [“A protruding tongue”, “An excessively long neck”, “Bulging of the nose and face”, “Downward slanting eyes”], ans: 0, topic: “Pediatrics” },
+{ id: 73, q: “A 24-year-old post-seizure patient is conscious but combative, history of seizures on Tegretol, BP 146/90, HR 110. MOST appropriate treatment:”, options: [“Administer O2 as tolerated, establish IV, pad ambulance cot rails, transport without lights and siren”, “Establish vascular access, administer diazepam or lorazepam for combativeness, transport to closest hospital”, “Give high-flow O2, insert IO catheter in proximal tibia, transport, observe for seizure”, “Administer O2, restrain her, place a bite block in her mouth, transport”], ans: 0, topic: “Neurology” },
+{ id: 74, q: “The quickest way to prevent newborn hypothermia involves:”, options: [“Administering warmed IV fluids”, “Thoroughly drying the newborn after birth”, “Applying a hot water bottle to the groin area”, “Administering warmed, humidified oxygen”], ans: 1, topic: “Neonatology” },
+{ id: 75, q: “A 7-year-old suddenly stopped speaking and started blinking her eyes rapidly for less than 1 minute, then rapidly improved. This is consistent with a(n) _____ seizure.”, options: [“Absence”, “Tonic-clonic”, “Simple partial”, “Complex partial”], ans: 0, topic: “Neurology” },
+{ id: 76, q: “Toxic effects of alcohol on the liver include:”, options: [“Coagulopathy”, “Hypoglycemia only”, “Hepatitis only”, “Portal hypertension only”], ans: 0, topic: “Toxicology” },
+{ id: 77, q: “Abnormal breath sounds associated with pneumonia and congestive heart failure are MOST often heard in the:”, options: [“Right middle lobe”, “Bases of the lungs”, “Apices of the lungs”, “Midaxillary line”], ans: 1, topic: “Respiratory” },
+{ id: 78, q: “While staging at a sniper situation, a police officer has been shot in the leg and is bleeding profusely. You should:”, options: [“Request at least two armed SWAT team members to accompany you to the patient”, “Remain where you are and wait for the SWAT team to bring the patient to you”, “Attempt to make verbal contact with the SWAT team and instruct them to apply a tourniquet”, “Use the concepts of cover and concealment as you carefully make your way to the patient”], ans: 2, topic: “Trauma/Disaster” },
+{ id: 79, q: “Which of the following would be of greatest value when trying to determine the type of hazardous material a commercial tanker truck is carrying?”, options: [“Waybill”, “CHEMTREC”, “Bill of lading”, “Emergency Response Guidebook”], ans: 2, topic: “Hazmat” },
+{ id: 80, q: “A 36-year-old with severe asthma has poor respiratory effort inhibiting nebulizer drug delivery and deteriorating mental status. You should:”, options: [“Assist his ventilations and establish vascular access”, “Start an IV of normal saline and administer a steroid”, “Apply high-flow oxygen via a nonrebreathing mask”, “Assist him with a metered-dose inhaler bronchodilator”], ans: 0, topic: “Respiratory” },
+{ id: 81, q: “A 4-year-old girl is ill: tachypneic, tachycardic, warm moist skin, no increased work of breathing, no vomiting/diarrhea. Her tachycardia and tachypnea are MOST likely the result of:”, options: [“Fever and anxiety”, “Early hypoxemia”, “A cardiac problem”, “Moderate dehydration”], ans: 0, topic: “Pediatrics” },
+{ id: 82, q: “Tuberculosis is communicable when the patient:”, options: [“Has an active lesion on their lung”, “Is in the latent phase of disease”, “Has been taking antibiotics for 5 days”, “Shows no symptoms of the disease”], ans: 0, topic: “Infection Control” },
+{ id: 83, q: “Upon arriving for a 4-year-old boy with respiratory distress sitting on his father’s lap, the child is unaware of your presence. Your initial action should be to:”, options: [“Make physical contact with the child as soon as possible to identify life threats”, “Allow the father to carry his son to the ambulance for your assessment”, “Quickly build good rapport with the child by picking him up”, “Visually assess the child from across the room for signs of increased work of breathing”], ans: 3, topic: “Pediatrics” },
+{ id: 84, q: “Treatment for a child with respiratory distress should include:”, options: [“A semisitting position and bag-mask ventilation”, “A position of comfort and supplemental oxygen”, “A supine position and drug-assisted intubation”, “A sniffing position and bag-mask ventilation”], ans: 1, topic: “Pediatrics” },
+{ id: 85, q: “The presentation of Mallory-Weiss syndrome is linked to ___ and is caused by ___.”, options: [“Eating spicy foods, erosion of the lining of the GI tract”, “Spastic coughing, rupture of esophageal veins due to portal hypertension”, “Severe vomiting, a tear at the junction between the esophagus and stomach”, “Blunt trauma, rupture of hollow organs with resultant peritoneal inflammation”], ans: 2, topic: “GI” },
+{ id: 86, q: “Severely hypothermic newborns may present with sclerema, which is defined as:”, options: [“A yellow or orange tint to the white portion of the eyes”, “Spontaneous bleeding due to blood-clotting abnormalities”, “An inability to shiver due to an immature immune system”, “Hardening of the skin associated with reddening and edema”], ans: 3, topic: “Neonatology” },
+{ id: 87, q: “Which of the following assessment findings is most suggestive of disseminated intravascular coagulation?”, options: [“Pruritis”, “Dyspnea”, “Tachycardia”, “Purpura”], ans: 3, topic: “Hematology” },
+{ id: 88, q: “Which of the following clinical findings is suggestive of a peripheral vascular disorder?”, options: [“A bruit heard over the carotid artery”, “Pain in the calf muscle while walking”, “Swelling and pain along the course of a vein”, “An S3 sound during auscultation of the heart”], ans: 0, topic: “Cardiology” },
+{ id: 89, q: “A common cause of cardiac arrest in patients is:”, options: [“Acute myocardial infarction”, “Electrocution”, “A dysrhythmia”, “Respiratory failure”], ans: 2, topic: “Cardiology” },
+{ id: 90, q: “Which of the following statements regarding uterine fundus measurement is correct?”, options: [“Measurement of the fundus in centimeters corresponds to the number of gestational weeks”, “If the fundus is longer than expected, it could indicate uterine growth problems”, “A shorter than expected measurement is most suggestive of a breech position”, “If the fundus measures 36 cm, the woman is between 32 and 34 weeks pregnant”], ans: 0, topic: “OB/GYN” },
+{ id: 91, q: “Which of the following statements regarding Rh disease during pregnancy is correct?”, options: [“Isoimmunization occurs when an Rh-positive woman becomes pregnant by an Rh-negative man”, “Rh disease is a problem during the first pregnancy and occurs when the mother’s blood is Rh positive”, “If the fetus inherits Rh-positive blood, it will create antibodies that can result in maternal hemolysis”, “During subsequent pregnancies, the Rh antibody will cross the placental barrier and attack fetal RBCs”], ans: 3, topic: “OB/GYN” },
+{ id: 92, q: “In an ectopic pregnancy, bleeding usually occurs:”, options: [“After the onset of pain”, “Before the onset of pain”, “Simultaneously with pain onset”, “Without any associated pain”], ans: 0, topic: “OB/GYN” },
+{ id: 93, q: “Which of the following interventions should be performed en route to the hospital during a lengthy transport of a patient with suspected MI?”, options: [“Supplemental oxygen”, “Aspirin administration”, “IV therapy and analgesia”, “12-lead electrocardiography”], ans: 2, topic: “Cardiology” },
+{ id: 94, q: “The MOST common reasons for ineffective bag-mask ventilations in the newborn are:”, options: [“Equipment malfunction and a ventilation rate that is too rapid”, “Inadequate mask-to-face seal and incorrect head position”, “Hyperflexion of the newborn’s head and thick mucous plugs”, “Pneumothorax and a face mask that is too large for the infant”], ans: 1, topic: “Neonatology” },
+{ id: 95, q: “A 39-year-old man with OCD stopped his medication a week ago and has fleeting suicidal thoughts but denies homicidal thoughts. You should:”, options: [“Tell him that stopping his medications abruptly could result in death”, “Transport him to the hospital and ask a police officer to accompany you”, “Safely transport him to the hospital and monitor his behavior en route”, “Make contact with his psychiatrist to apprise him or her of the situation”], ans: 2, topic: “Psych” },
+{ id: 96, q: “An elderly dialysis patient who missed 3 treatments has BP 98/60, HR 118, sinus tachycardia with peaked T waves. You should be MOST concerned with potential for:”, options: [“Severe hypovolemia”, “Acute bradycardia or heart block”, “Lethal ventricular dysrhythmias”, “Hypokalemia-induced cardiac arrest”], ans: 2, topic: “Renal” },
+{ id: 97, q: “A patent airway:”, options: [“Is evidenced by visible chest rise”, “Should be prophylactically suctioned”, “Does not equate to adequate ventilation”, “Is characterized by adequate tidal volume”], ans: 2, topic: “Respiratory” },
+{ id: 98, q: “Upon arriving at a chlorine gas spill scene, you should:”, options: [“Begin triaging all patients”, “Park the ambulance upwind”, “Remove all patients from the scene”, “Don a protective breathing apparatus”], ans: 1, topic: “Hazmat” },
+{ id: 99, q: “An increase in the number of EMS calls for patients with chronic respiratory problems MOST commonly occurs:”, options: [“During sudden weather changes”, “During an influenza outbreak”, “When the relative humidity is low”, “When people travel during a holiday”], ans: 0, topic: “Respiratory” },
+{ id: 100, q: “Which of the following mechanisms causes hypertension?”, options: [“Arteriosclerosis results in increased elasticity, causing vasodilation and increased arteriolar capacity”, “Atherosclerotic plaque narrows coronary arteries, resulting in increased cardiac perfusion”, “Increased afterload stimulates the Frank-Starling reflex, raising pressure behind blood leaving the heart”, “Heart rate persistently above 80 bpm causes an increase in cardiac output and resultant increased BP”], ans: 2, topic: “Cardiology” },
+{ id: 101, q: “A 40-year-old in obvious anaphylactic shock after scorpion sting: responsive to pain only, poor respiratory effort, hypotensive, tachycardic. MOST appropriate treatment sequence:”, options: [“Immediate intubation, 0.5 mg Epi 1:1,000 SQ, two large-bore IVs with NS, 250-mL bolus, 25 mg Benadryl IM”, “Assisted ventilation, intubation if needed, at least one large-bore IV with NS, 1 mg Epi 1:10,000 IV, up to 50 mg Benadryl IV or IM”, “High-flow O2 via NRB mask, 0.1-0.5 mg Epi 1:1,000 IM, two large-bore IVs with NS, 20-mL/kg boluses”, “Assisted ventilation, Combitube insertion, 25-50 mg Benadryl IM then 0.3 mg Epi 1:1,000 SQ, large-bore IV with NS”], ans: 1, topic: “Immunology” },
+{ id: 102, q: “An 80-year-old man with progressive weakness, prior MI, HTN, chronic renal insufficiency, AFib, scattered crackles, BP 108/60, HR 94 irregular. In addition to O2, you should:”, options: [“Start IV with D5W, assess BGL, administer half dose of diltiazem to lower AFib rate”, “Obtain 12-lead ECG, start IV with NS and give 250-mL bolus, reassess BP, transport”, “Establish vascular access, administer 2 mg morphine for apparent pulmonary edema, monitor, transport”, “Obtain 12-lead ECG, assess BGL, establish vascular access at KVO rate, transport”], ans: 3, topic: “Cardiology” },
+{ id: 103, q: “The risk of aspiration in the pregnant woman is increased significantly because:”, options: [“Decreased digestion causes a delay in gastric emptying”, “Pregnancy hormones often cause nausea and vomiting”, “Increased tidal volume causes air to enter the stomach”, “The gastric lining is extremely irritable during pregnancy”], ans: 0, topic: “OB/GYN” },
+{ id: 104, q: “According to the Apgar score, a newborn with a heart rate of 80 beats/min and slow, irregular breathing should receive a combined score of:”, options: [“2”, “3”, “4”, “5”], ans: 0, topic: “Neonatology” },
+{ id: 105, q: “According to the Apgar score, a newborn with a heart rate of 80 beats/min and slow, irregular breathing should receive a combined score of: (confirm)”, options: [“2”, “3”, “4”, “5”], ans: 0, topic: “Neonatology” },
+{ id: 106, q: “Which of the following statements regarding paralysis is correct?”, options: [“A paralyzed patient has lost the ability to voluntarily move a body part”, “Paralysis always entails the loss of both sensory and motor functions”, “Injuries to the thoracic or lumbar spine generally result in quadriplegia”, “Most patients who are paralyzed have normal sensation or hyperesthesia”], ans: 0, topic: “Neurology” },
+{ id: 107, q: “Which of the following statements regarding the warm zone at a hazardous materials incident is correct?”, options: [“Patients brought to the warm zone by trained rescuers should already have been decontaminated”, “A standard-size warm zone is generally 50 feet in all directions”, “The warm zone is also known as the contamination zone and is only accessible by properly trained rescuers”, “It may be necessary to perform urgent lifesaving care in the warm zone before a patient is fully decontaminated”], ans: 3, topic: “Hazmat” },
+{ id: 108, q: “A 6-year-old child with fever has red, flat, rounded lesions on her torso. This finding is MOST indicative of:”, options: [“Cupping”, “Coining”, “Physical abuse”, “Phytophotodermatitis”], ans: 0, topic: “Pediatrics” },
+{ id: 109, q: “The toxicity of carbon monoxide arises primarily from:”, options: [“Its destructive properties on ferric ions”, “Its affinity for hemoglobin in red blood cells”, “The fact that carbon monoxide destroys hemoglobin molecules”, “Its ability to markedly decrease the metabolic rate”], ans: 1, topic: “Toxicology” },
+{ id: 110, q: “Which of the following assessment parameters is MOST difficult to interpret when a pregnant woman is injured?”, options: [“Pupils”, “Pulse rate”, “Mental status”, “Blood glucose”], ans: 1, topic: “OB/GYN” },
+{ id: 111, q: “Which of the following statements regarding postrenal acute renal failure (ARF) is correct?”, options: [“Patients with postrenal ARF typically develop severe hypokalemia”, “Postrenal ARF involves damage to the renal parenchyma or tubules”, “Postrenal ARF typically results in decreased pressure on the nephrons”, “Postrenal ARF is caused by obstruction of urine flow from the kidneys”], ans: 3, topic: “Renal” },
+{ id: 112, q: “A patient with quiet tachypnea is MOST likely experiencing:”, options: [“Shock”, “Asthma”, “Alkalosis”, “Airway swelling”], ans: 0, topic: “Respiratory” },
+{ id: 113, q: “Which of the following statements would be appropriate when documenting a case of suspected abuse?”, options: [”‘The patient’s injury is not consistent with an accident.’”, “‘The injury was reported to have occurred at 1420 hours.’”, “‘The abdominal exam of the patient was within normal limits.’”, “‘There was a gross discrepancy between the caregivers’ stories.’”], ans: 1, topic: “EMS Operations” },
+{ id: 114, q: “Which of the following actions can reduce the level of contamination of a person by as much as 90%?”, options: [“Removing the patient’s clothing”, “Using large pads to absorb the chemical”, “Using an agent to neutralize the chemical”, “Flushing with copious amounts of water”], ans: 0, topic: “Hazmat” },
+{ id: 115, q: “Common signs and symptoms of a lower urinary tract infection include:”, options: [“Gross hematuria”, “Normal urination”, “Decreased urinary frequency”, “Painful urination”], ans: 3, topic: “Renal” },
+{ id: 116, q: “Ventricular shunts are typically placed in children who:”, options: [“Are born with a congenital condition where ventricles produce excessive CSF”, “Have experienced a severe TBI resulting in chronic cerebral edema and increased ICP”, “Are born with an abnormally small brain causing relative increase in circulating CSF”, “Have impaired circulation and absorption of CSF, leading to increased ventricle size and ICP”], ans: 3, topic: “Pediatrics” },
+{ id: 117, q: “Which of the following prescribed medications would a patient with chronic atrial fibrillation MOST likely take?”, options: [“Plavix and Vasotec”, “Lisinopril and aspirin”, “Digitalis and Coumadin”, “Cordarone and furosemide”], ans: 2, topic: “Cardiology” },
+{ id: 118, q: “A 21-year-old with pleuritic chest pain and dyspnea during softball: SpO2 93% on room air, diminished breath sounds upper right lobe. MOST appropriate treatment:”, options: [“Performing a needle decompression to the right side of his chest”, “Assisting his ventilations to increase his oxygen saturation”, “Administering high-flow supplemental oxygen and transporting at once”, “Applying a CPAP unit and starting an IV line en route to the hospital”], ans: 2, topic: “Respiratory” },
+{ id: 119, q: “Which of the following processes take place in the uterus?”, options: [“Fertilization”, “Release of implantation”, “Lactation”, “Fetal development”], ans: 3, topic: “OB/GYN” },
+{ id: 120, q: “Which of the following statements regarding Grey Turner sign is correct?”, options: [“Grey Turner sign is characterized by bruising around the umbilicus”, “The presence of Grey Turner sign should make you suspicious for hepatitis”, “Grey Turner sign is the cessation of inspiration during abdominal palpation”, “Grey Turner sign is characterized by flank bruising and indicates retroperitoneal hemorrhage”], ans: 3, topic: “Trauma/Disaster” },
+{ id: 121, q: “Which of the following is a function of the placenta?”, options: [“Synthesis of sugar”, “Fetal protection against all harmful substances”, “Antibody production that protects the fetus”, “Excretion of heat”], ans: 2, topic: “OB/GYN” },
+{ id: 122, q: “Which of the following general statements regarding anaphylactic shock is correct?”, options: [“You must first determine what caused the allergic reaction to provide appropriate treatment”, “In the presence of anaphylaxis, intervention takes precedence over identifying the offending antigen”, “Anaphylactic shock would most likely occur following initial exposure to an offending antigen”, “Most patients who carry a prescribed EpiPen are not completely aware of what they are allergic to”], ans: 1, topic: “Immunology” },
+{ id: 123, q: “Which of the following patients would MOST likely present with atypical signs and symptoms of an acute myocardial infarction?”, options: [“49-year-old obese man”, “58-year-old diabetic woman”, “60-year-old man with anxiety”, “71-year-old woman with hypertension”], ans: 1, topic: “Cardiology” },
+{ id: 124, q: “Bedridden patients with excessive pulmonary secretions are MOST prone to developing:”, options: [“Pneumonia”, “Bronchospasm”, “A pneumothorax”, “A pulmonary embolism”], ans: 0, topic: “Respiratory” },
+{ id: 125, q: “COPD is characterized by:”, options: [“Narrowing of smaller airways that is often reversible with prompt treatment”, “Changes in pulmonary structure and function that are progressive and irreversible”, “Small airway spasms during inhalation resulting in progressive hypoxia”, “Widespread alveolar collapse due to increased pressure during exhalation”], ans: 1, topic: “Respiratory” },
+{ id: 126, q: “Which of the following is consistent with hyperosmolar hyperglycemic syndrome?”, options: [“Glucose 340 mg/dL; pH 7.29; ketone bodies present”, “Glucose 500 mg/dL; pH 7.20; ketone bodies absent”, “Glucose 612 mg/dL; pH 7.39; ketone bodies absent”, “Glucose 420 mg/dL; pH 7.25; ketone bodies present”], ans: 2, topic: “Endocrine” },
+{ id: 127, q: “A 76-year-old with emphysema: pursed lip breathing, prolonged expiratory phase, SpO2 76%, on home O2 at 2 L/min. Your initial action should be to:”, options: [“Increase her oxygen flow rate to 6 L/min”, “Administer a beta-2 agonist via nebulizer”, “Place her in a position that facilitates breathing”, “Auscultate her lungs for adventitious breath sounds”], ans: 2, topic: “Respiratory” },
+{ id: 128, q: “Uterine inversion occurs when:”, options: [“The musculature of the uterine fundus is inherently weak, causing the uterus to prolapse”, “The placenta fails to detach properly and adheres to the uterine wall when it is expelled”, “Postpartum bleeding is improperly managed with inadequate massage of the uterine fundus”, “Excessive postpartum hemorrhage causes uterine ischemia and subsequent expulsion from the vagina”], ans: 1, topic: “OB/GYN” },
+{ id: 129, q: “A patient with a history of asthma is at GREATEST risk for respiratory arrest if he or she:”, options: [“Takes a bronchodilator and a corticosteroid”, “Was previously intubated for his or her condition”, “Was recently evaluated in an emergency department”, “Has used his or her inhaler twice in the previous week”], ans: 1, topic: “Respiratory” },
+{ id: 130, q: “Which of the following statements regarding critical incident stress management at an MCI is correct?”, options: [“CISM should begin only after all patients have been cared for appropriately”, “At an MCI, rescuers are unable to self-heal and lose their resiliency to cope with stress”, “Rescuers should be encouraged, but not forced, to report to the rehabilitation sector for a stress debriefing”, “Critical incident stress management is a crucial and mandatory part of any disaster and should be enforced”], ans: 2, topic: “EMS Operations” },
+{ id: 131, q: “The MOST important therapy the paramedic can administer to a patient with an isolated renal calculus is:”, options: [“Oxygen”, “Rehydration”, “Analgesia”, “An antiemetic”], ans: 2, topic: “Renal” },
+{ id: 132, q: “While assessing a patient, you note that she is making repetitive hand gestures as though she is trying to grasp at something. This is an example of which type of movement?”, options: [“Stereotyped”, “Dystonic”, “Myoclonic”, “Choreiform”], ans: 0, topic: “Neurology” },
+{ id: 133, q: “Which of the following is an example of domestic terrorism?”, options: [“Oklahoma City bombing”, “India attack”, “World Trade Center attack”, “Belgium bombing”], ans: 0, topic: “Hazmat” },
+{ id: 134, q: “Which of the following is a common sign of left ventricular failure?”, options: [“Hypotension”, “Tachycardia”, “JVD”, “Cerebral Edema”], ans: 1, topic: “Cardiology” },
+{ id: 135, q: “An otherwise healthy adult will typically begin to exhibit cyanosis when:”, options: [“Hemoglobin levels fall below 12 g/dL”, “About 5 g/dL of hemoglobin is desaturated”, “Oxygen saturation falls below 50%”, “10% of his or her hemoglobin is desaturated”], ans: 1, topic: “Hematology” },
+{ id: 136, q: “Ventilating a child too fast with a bag-mask device may cause:”, options: [“Decreased preload”, “Severe hypercarbia”, “Cerebral vasodilation”, “Reflex hypertension”], ans: 0, topic: “Pediatrics” },
+{ id: 137, q: “Which immunization recommended by the CDC for healthcare providers requires a booster every 10 years?”, options: [“Influenza”, “Hepatitis B vaccine”, “Tetanus, diphtheria and pertussis (Tdap)”, “Measles, mumps, and rubella”], ans: 2, topic: “Infection Control” },
+{ id: 138, q: “Total anomalous pulmonary venous return is a rare congenital defect in which:”, options: [“Pressure in the lungs causes pulmonary hypertension”, “The four pulmonary veins connect to the right atrium”, “Venous blood mixes with arterial blood in the heart”, “Blood returns to the lungs after being reoxygenated”], ans: 1, topic: “Pediatrics” },
+{ id: 139, q: “A pulse oximetry reading would be LEAST accurate in a patient:”, options: [“With chronic hypoxia”, “Whose extremities are cool”, “With persistent tachycardia”, “With poor peripheral perfusion”], ans: 3, topic: “Respiratory” },
+{ id: 140, q: “Which of the following steps of caring for a patient with a psychiatric emergency would MOST likely give the patient the feeling that something is being done to help?”, options: [“Asking direct questions”, “Encouraging the patient to talk”, “Remaining calm and confident”, “Developing a definite plan”], ans: 3, topic: “Psych” },
+{ id: 141, q: “Which of the following differentiates an atrial rhythm from a sinus rhythm?”, options: [“Tachycardia”, “Profound bradycardia”, “Dissociated P waves”, “Varying shapes in P waves”], ans: 3, topic: “Cardiology” },
+{ id: 142, q: “Respiratory distress in a premature infant is MOST often the result of:”, options: [“A pneumothorax”, “Surfactant deficiency”, “Pneumonia at birth”, “Intracranial hemorrhage”], ans: 1, topic: “Neonatology” },
+{ id: 143, q: “A 74-year-old who fainted has BP 80/50, HR 110, weak pulse, history of angina and kidney disease. As your partner gives O2, you should:”, options: [“Assess for the presence of a nitroglycerin patch on the patient and remove it if wearing one”, “Quickly establish vascular access and administer a 20-mL/kg bolus of isotonic crystalloid”, “Obtain a detailed list of all medical problems and medications that she is taking”, “Perform a rapid head-to-toe assessment to determine gross injuries or hidden conditions”], ans: 0, topic: “Cardiology” },
+{ id: 144, q: “In contrast to endometritis, endometriosis:”, options: [“May present without abdominal pain”, “Is an inflammation of the uterine lining”, “Generally causes light menstrual periods”, “Is often the result of gynecologic surgery”], ans: 0, topic: “OB/GYN” },
+{ id: 145, q: “Implantation of a fertilized egg within a fallopian tube:”, options: [“Produces atypical signs of pregnancy”, “Can cause severe intra-abdominal hemorrhage”, “Represents only 3% of all ectopic pregnancies”, “Is usually detected after the 20th week of pregnancy”], ans: 1, topic: “OB/GYN” },
+{ id: 146, q: “Which of the following leads provides the BEST view of the anterolateral wall of the left ventricle?”, options: [“V5 to V6”, “V3 to V6”, “V4 to V5”, “V2 to V3”], ans: 1, topic: “Cardiology” },
+{ id: 147, q: “Tricyclic antidepressant medications:”, options: [“Are the first-line therapy for the treatment of depression”, “May produce toxic effects with even minimal dosing errors”, “Generally require high doses to achieve a therapeutic effect”, “Are very safe because they have a large therapeutic window”], ans: 1, topic: “Toxicology” },
+{ id: 148, q: “Which of the following natural disasters would be associated with the LEAST amount of warning time?”, options: [“Tornadoes”, “Tsunamis”, “Earthquakes”, “Hurricanes”], ans: 2, topic: “Trauma/Disaster” },
+{ id: 149, q: “A hyperventilating patient:”, options: [“May be acidotic and is trying to decrease his or her pH level”, “Is most effectively treated by administering a sedative drug”, “Should rebreathe his or her carbon dioxide to effect resolution”, “Presents with tachypnea and marked use of accessory muscles”], ans: 0, topic: “Respiratory” },
+{ id: 150, q: “Which of the following is an early clinical manifestation of an allergic reaction?”, options: [“Shock”, “Stridor”, “Urticaria”, “Hypoxemia”], ans: 2, topic: “Immunology” },
+];
+
+const TOPICS = [“All”, …Array.from(new Set(ALL_QUESTIONS.map(q => q.topic))).sort()];
+
+const TOPIC_COLORS = {
+Cardiology: “#ef4444”, GI: “#f59e0b”, Hazmat: “#10b981”, Respiratory: “#3b82f6”,
+Pediatrics: “#8b5cf6”, “OB/GYN”: “#ec4899”, Neurology: “#14b8a6”, Endocrine: “#f97316”,
+Hematology: “#dc2626”, Toxicology: “#84cc16”, Immunology: “#06b6d4”, Renal: “#a855f7”,
+Neonatology: “#f472b6”, Psych: “#6366f1”, Geriatrics: “#78716c”, “Infection Control”: “#22c55e”,
+“EMS Operations”: “#64748b”, “Trauma/Disaster”: “#b45309”, All: “#94a3b8”
+};
+
+function shuffle(arr) { return […arr].sort(() => Math.random() - 0.5); }
+
+// ── QUIZ MODE ─────────────────────────────────────────────────────────────────
+function QuizMode({ topic }) {
+const pool = ALL_QUESTIONS.filter(q => topic === “All” || q.topic === topic);
+const [questions] = useState(() => shuffle(pool));
+const [idx, setIdx] = useState(0);
+const [selected, setSelected] = useState(null);
+const [score, setScore] = useState({ correct: 0, wrong: 0 });
+const [done, setDone] = useState(false);
+const [wrongList, setWrongList] = useState([]);
+
+const q = questions[idx];
+const answered = selected !== null;
+const correct = selected === q?.ans;
+const accentColor = TOPIC_COLORS[q?.topic] || “#64748b”;
+
+const pick = (i) => {
+if (answered) return;
+setSelected(i);
+const isCorrect = i === q.ans;
+setScore(s => ({ correct: s.correct + (isCorrect ? 1 : 0), wrong: s.wrong + (isCorrect ? 0 : 1) }));
+if (!isCorrect) setWrongList(w => […w, q]);
+};
+
+const next = () => {
+if (idx + 1 >= questions.length) { setDone(true); return; }
+setSelected(null);
+setIdx(i => i + 1);
+};
+
+if (!pool.length) return <div style={{ color: “#94a3b8”, padding: 40, textAlign: “center” }}>No questions in this topic.</div>;
+
+if (done) return (
+<div style={{ textAlign: “center”, padding: “40px 20px” }}>
+<div style={{ fontSize: 72, marginBottom: 12 }}>
+{score.correct / questions.length >= 0.8 ? “🎉” : score.correct / questions.length >= 0.6 ? “📖” : “💪”}
+</div>
+<h2 style={{ fontSize: 28, fontWeight: 900, color: “#f1f5f9”, margin: “0 0 8px”, fontFamily: “‘Georgia’,serif” }}>Quiz Complete</h2>
+<p style={{ color: “#64748b”, marginBottom: 32, fontSize: 15 }}>{questions.length} questions — {topic}</p>
+<div style={{ display: “flex”, justifyContent: “center”, gap: 40, marginBottom: 40 }}>
+<div><div style={{ fontSize: 48, fontWeight: 900, color: “#22c55e” }}>{score.correct}</div><div style={{ color: “#64748b”, fontSize: 13 }}>Correct</div></div>
+<div><div style={{ fontSize: 48, fontWeight: 900, color: “#ef4444” }}>{score.wrong}</div><div style={{ color: “#64748b”, fontSize: 13 }}>Wrong</div></div>
+<div><div style={{ fontSize: 48, fontWeight: 900, color: “#f59e0b” }}>{Math.round(score.correct / questions.length * 100)}%</div><div style={{ color: “#64748b”, fontSize: 13 }}>Score</div></div>
+</div>
+{wrongList.length > 0 && (
+<div style={{ textAlign: “left”, marginBottom: 32 }}>
+<h3 style={{ color: “#ef4444”, fontSize: 14, fontWeight: 700, letterSpacing: 2, textTransform: “uppercase”, marginBottom: 12 }}>Review These ({wrongList.length})</h3>
+{wrongList.map(wq => (
+<div key={wq.id} style={{ background: “#1e293b”, border: “1px solid #ef444433”, borderRadius: 8, padding: 14, marginBottom: 8 }}>
+<p style={{ color: “#94a3b8”, fontSize: 13, margin: “0 0 4px” }}>Q{wq.id} · {wq.topic}</p>
+<p style={{ color: “#f1f5f9”, fontSize: 14, margin: “0 0 6px” }}>{wq.q}</p>
+<p style={{ color: “#22c55e”, fontSize: 13, margin: 0 }}>✓ {wq.options[wq.ans]}</p>
+</div>
+))}
+</div>
+)}
+<button onClick={() => window.location.reload()} style={{ padding: “14px 36px”, borderRadius: 8, border: “none”, background: “#3b82f6”, color: “#fff”, fontWeight: 700, fontSize: 16, cursor: “pointer” }}>New Quiz</button>
+</div>
+);
+
+const pct = ((idx) / questions.length) * 100;
+
+return (
+<div>
+{/* progress */}
+<div style={{ display: “flex”, alignItems: “center”, gap: 12, marginBottom: 20 }}>
+<div style={{ flex: 1, height: 6, background: “#1e293b”, borderRadius: 3 }}>
+<div style={{ width: `${pct}%`, height: “100%”, background: accentColor, borderRadius: 3, transition: “width 0.4s” }} />
+</div>
+<span style={{ color: “#64748b”, fontSize: 13, minWidth: 60, textAlign: “right” }}>{idx + 1} / {questions.length}</span>
+</div>
+
+```
+  {/* topic badge */}
+  <div style={{ marginBottom: 16 }}>
+    <span style={{ background: accentColor + "22", color: accentColor, border: `1px solid ${accentColor}44`, borderRadius: 4, padding: "3px 10px", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+      {q.topic}
+    </span>
+    <span style={{ color: "#334155", fontSize: 12, marginLeft: 10 }}>Q{q.id}</span>
+  </div>
+
+  {/* question */}
+  <div style={{ background: "#111827", border: `1px solid ${accentColor}33`, borderRadius: 12, padding: "24px 24px 20px", marginBottom: 16 }}>
+    <p style={{ color: "#f1f5f9", fontSize: 17, lineHeight: 1.65, margin: 0, fontWeight: 600 }}>{q.q}</p>
+  </div>
+
+  {/* options */}
+  <div style={{ display: "grid", gap: 10, marginBottom: 20 }}>
+    {q.options.map((opt, i) => {
+      let bg = "#111827", border = "#1e293b", col = "#94a3b8";
+      if (answered) {
+        if (i === q.ans) { bg = "#14532d33"; border = "#22c55e"; col = "#22c55e"; }
+        else if (i === selected) { bg = "#7f1d1d33"; border = "#ef4444"; col = "#ef4444"; }
+      } else if (selected === i) { bg = accentColor + "22"; border = accentColor; col = "#f1f5f9"; }
+      return (
+        <button key={i} onClick={() => pick(i)} style={{ background: bg, border: `1px solid ${border}`, borderRadius: 10, padding: "14px 18px", color: col, fontSize: 15, textAlign: "left", cursor: answered ? "default" : "pointer", transition: "all 0.15s", display: "flex", alignItems: "flex-start", gap: 12, lineHeight: 1.5 }}>
+          <span style={{ background: border + "44", color: border, borderRadius: 4, padding: "1px 7px", fontSize: 12, fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{String.fromCharCode(65 + i)}</span>
+          <span>{opt}</span>
+        </button>
+      );
+    })}
+  </div>
+
+  {answered && (
+    <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+      <div style={{ flex: 1, padding: 14, background: correct ? "#14532d22" : "#7f1d1d22", border: `1px solid ${correct ? "#22c55e" : "#ef4444"}44`, borderRadius: 8, color: correct ? "#22c55e" : "#ef4444", fontSize: 14, fontWeight: 700 }}>
+        {correct ? "✓ Correct!" : `✗ The correct answer was: ${q.options[q.ans]}`}
+      </div>
+      <button onClick={next} style={{ padding: "14px 28px", borderRadius: 8, border: "none", background: "#3b82f6", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer", flexShrink: 0 }}>
+        {idx + 1 >= questions.length ? "Finish" : "Next →"}
+      </button>
+    </div>
+  )}
+
+  {/* score strip */}
+  <div style={{ display: "flex", gap: 16, padding: "10px 0", borderTop: "1px solid #1e293b" }}>
+    <span style={{ color: "#22c55e", fontSize: 13 }}>✓ {score.correct}</span>
+    <span style={{ color: "#ef4444", fontSize: 13 }}>✗ {score.wrong}</span>
+    <span style={{ color: "#64748b", fontSize: 13 }}>{questions.length - idx - 1} remaining</span>
+  </div>
+</div>
+```
+
+);
+}
+
+// ── BROWSE MODE ───────────────────────────────────────────────────────────────
+function BrowseMode({ topic }) {
+const pool = ALL_QUESTIONS.filter(q => topic === “All” || q.topic === topic);
+const [search, setSearch] = useState(””);
+const [reveal, setReveal] = useState({});
+const filtered = pool.filter(q => q.q.toLowerCase().includes(search.toLowerCase()) || q.options.some(o => o.toLowerCase().includes(search.toLowerCase())));
+
+return (
+<div>
+<input value={search} onChange={e => setSearch(e.target.value)} placeholder=“Search questions…”
+style={{ width: “100%”, padding: “12px 16px”, borderRadius: 8, border: “1px solid #1e293b”, background: “#111827”, color: “#f1f5f9”, fontSize: 15, boxSizing: “border-box”, marginBottom: 20, outline: “none” }} />
+<p style={{ color: “#64748b”, fontSize: 13, marginBottom: 16 }}>{filtered.length} questions</p>
+<div style={{ display: “grid”, gap: 12 }}>
+{filtered.map(q => {
+const color = TOPIC_COLORS[q.topic] || “#64748b”;
+const shown = reveal[q.id];
+return (
+<div key={q.id} style={{ background: “#111827”, border: `1px solid ${shown ? color + "55" : "#1e293b"}`, borderRadius: 10, padding: 18, transition: “border-color 0.2s” }}>
+<div style={{ display: “flex”, justifyContent: “space-between”, alignItems: “flex-start”, marginBottom: 10 }}>
+<div style={{ display: “flex”, gap: 8, alignItems: “center” }}>
+<span style={{ color: “#334155”, fontSize: 12, fontWeight: 700 }}>Q{q.id}</span>
+<span style={{ background: color + “22”, color, border: `1px solid ${color}44`, borderRadius: 4, padding: “1px 8px”, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: “uppercase” }}>{q.topic}</span>
+</div>
+<button onClick={() => setReveal(r => ({ …r, [q.id]: !r[q.id] }))} style={{ background: “none”, border: `1px solid #1e293b`, borderRadius: 6, color: “#64748b”, fontSize: 12, padding: “3px 10px”, cursor: “pointer” }}>
+{shown ? “Hide” : “Answer”}
+</button>
+</div>
+<p style={{ color: “#cbd5e1”, fontSize: 15, margin: “0 0 12px”, lineHeight: 1.6 }}>{q.q}</p>
+<div style={{ display: “grid”, gap: 5 }}>
+{q.options.map((opt, i) => {
+const isAns = i === q.ans;
+return (
+<div key={i} style={{
+padding: “8px 12px”, borderRadius: 6, fontSize: 13, lineHeight: 1.5,
+background: shown && isAns ? “#14532d33” : “#0f172a”,
+color: shown && isAns ? “#22c55e” : shown ? “#374151” : “#64748b”,
+border: `1px solid ${shown && isAns ? "#22c55e55" : "#1e293b"}`,
+fontWeight: shown && isAns ? 700 : 400,
+display: “flex”, gap: 8, alignItems: “flex-start”
+}}>
+<span style={{ color: shown && isAns ? “#22c55e” : “#334155”, fontFamily: “monospace”, flexShrink: 0 }}>{String.fromCharCode(65 + i)}.</span>
+<span>{opt}</span>
+</div>
+);
+})}
+</div>
+</div>
+);
+})}
+</div>
+</div>
+);
+}
+
+// ── STATS MODE ────────────────────────────────────────────────────────────────
+function StatsMode() {
+const topicCounts = TOPICS.filter(t => t !== “All”).map(t => ({
+topic: t, count: ALL_QUESTIONS.filter(q => q.topic === t).length, color: TOPIC_COLORS[t]
+})).sort((a, b) => b.count - a.count);
+const max = Math.max(…topicCounts.map(t => t.count));
+
+return (
+<div>
+<h3 style={{ color: “#94a3b8”, fontSize: 13, fontWeight: 700, letterSpacing: 2, textTransform: “uppercase”, marginBottom: 24 }}>
+{ALL_QUESTIONS.length} total questions by topic
+</h3>
+<div style={{ display: “grid”, gap: 10 }}>
+{topicCounts.map(({ topic, count, color }) => (
+<div key={topic}>
+<div style={{ display: “flex”, justifyContent: “space-between”, marginBottom: 5 }}>
+<span style={{ color: “#cbd5e1”, fontSize: 14 }}>{topic}</span>
+<span style={{ color, fontSize: 14, fontWeight: 700 }}>{count}</span>
+</div>
+<div style={{ height: 8, background: “#1e293b”, borderRadius: 4 }}>
+<div style={{ width: `${(count / max) * 100}%`, height: “100%”, background: color, borderRadius: 4, transition: “width 0.6s ease” }} />
+</div>
+</div>
+))}
+</div>
+<div style={{ marginTop: 32, display: “grid”, gridTemplateColumns: “1fr 1fr”, gap: 12 }}>
+{[
+[“Total Questions”, ALL_QUESTIONS.length, “#3b82f6”],
+[“Topics Covered”, TOPICS.length - 1, “#22c55e”],
+[“Cardiology Qs”, topicCounts.find(t => t.topic === “Cardiology”)?.count, “#ef4444”],
+[“Pediatric Qs”, topicCounts.find(t => t.topic === “Pediatrics”)?.count, “#8b5cf6”],
+].map(([label, val, color]) => (
+<div key={label} style={{ background: “#111827”, border: `1px solid #1e293b`, borderRadius: 10, padding: 20, textAlign: “center” }}>
+<div style={{ fontSize: 36, fontWeight: 900, color }}>{val}</div>
+<div style={{ color: “#64748b”, fontSize: 13, marginTop: 4 }}>{label}</div>
+</div>
+))}
+</div>
+</div>
+);
+}
+
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
+export default function App() {
+const [mode, setMode] = useState(“quiz”);
+const [topic, setTopic] = useState(“All”);
+const [quizKey, setQuizKey] = useState(0);
+
+const startQuiz = useCallback((t) => {
+setTopic(t);
+setMode(“quiz”);
+setQuizKey(k => k + 1);
+}, []);
+
+const tabs = [
+{ id: “quiz”, label: “Quiz”, icon: “✍️” },
+{ id: “browse”, label: “Browse”, icon: “📖” },
+{ id: “stats”, label: “Topics”, icon: “📊” },
+];
+
+return (
+<div style={{ background: “#0a0e1a”, minHeight: “100vh”, color: “#f1f5f9”, fontFamily: “‘Segoe UI’, system-ui, sans-serif” }}>
+{/* header */}
+<div style={{ background: “linear-gradient(135deg, #0f172a 0%, #111827 100%)”, borderBottom: “1px solid #1e293b”, padding: “18px 24px” }}>
+<div style={{ maxWidth: 800, margin: “0 auto” }}>
+<div style={{ display: “flex”, justifyContent: “space-between”, alignItems: “center” }}>
+<div>
+<h1 style={{ margin: 0, fontSize: 20, fontWeight: 900, color: “#f1f5f9”, letterSpacing: 0.5, fontFamily: “‘Georgia’,serif” }}>
+P2 Final Study Guide
+</h1>
+<p style={{ margin: “3px 0 0”, color: “#475569”, fontSize: 13 }}>150 questions · 18 topics</p>
+</div>
+<div style={{ display: “flex”, gap: 6 }}>
+{TOPICS.slice(0, 4).filter(t => t !== “All”).map(t => (
+<div key={t} style={{ width: 8, height: 8, borderRadius: “50%”, background: TOPIC_COLORS[t], opacity: 0.8 }} />
+))}
+</div>
+</div>
+
+```
+      {/* topic filter pills */}
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 14 }}>
+        {TOPICS.map(t => {
+          const color = TOPIC_COLORS[t] || "#64748b";
+          const active = topic === t;
+          return (
+            <button key={t} onClick={() => { setTopic(t); if (mode === "quiz") setQuizKey(k => k + 1); }}
+              style={{ padding: "5px 12px", borderRadius: 20, border: `1px solid ${active ? color : "#1e293b"}`, background: active ? color + "22" : "transparent", color: active ? color : "#475569", cursor: "pointer", fontSize: 12, fontWeight: active ? 700 : 400, transition: "all 0.15s", whiteSpace: "nowrap" }}>
+              {t}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+
+  {/* tabs */}
+  <div style={{ borderBottom: "1px solid #1e293b", background: "#0f172a" }}>
+    <div style={{ maxWidth: 800, margin: "0 auto", display: "flex" }}>
+      {tabs.map(t => (
+        <button key={t.id} onClick={() => { setMode(t.id); if (t.id === "quiz") setQuizKey(k => k + 1); }}
+          style={{ padding: "13px 20px", border: "none", borderBottom: `2px solid ${mode === t.id ? "#3b82f6" : "transparent"}`, background: "transparent", color: mode === t.id ? "#3b82f6" : "#475569", cursor: "pointer", fontSize: 14, fontWeight: mode === t.id ? 700 : 400, transition: "all 0.15s" }}>
+          {t.icon} {t.label}
+        </button>
+      ))}
+      <div style={{ flex: 1 }} />
+      {mode === "quiz" && (
+        <button onClick={() => setQuizKey(k => k + 1)} style={{ padding: "13px 20px", border: "none", background: "transparent", color: "#64748b", cursor: "pointer", fontSize: 13 }}>
+          ↺ Restart
+        </button>
+      )}
+    </div>
+  </div>
+
+  {/* content */}
+  <div style={{ maxWidth: 800, margin: "0 auto", padding: "28px 24px" }}>
+    {mode === "quiz" && <QuizMode key={`${quizKey}-${topic}`} topic={topic} />}
+    {mode === "browse" && <BrowseMode topic={topic} />}
+    {mode === "stats" && <StatsMode />}
+  </div>
+</div>
+```
+
+);
+}
